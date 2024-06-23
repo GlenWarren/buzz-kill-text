@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Buzz Kill</title>
+    </head>
+    <body>
+        <div id='container'>
+            <h2>BUZZ KILL<i> - Destroy the wasp nest!</i></h2>
+            <div id='wasp-nest'></div>
+            <div id="button">
+                <button onclick="attack()">ATTACK!</button>
+            </div>
+            <h4>Attack Count: <span id='attack-count'>0</span></h4>
+            <h2 id='alert'></h2>
+        </div>
+
+        <script>
+            /* Starting health points */
+            const queenHealth = 80;
+            const workerHealth = 68;
+            const droneHealth = 60;
+
+            /* Loss of health upon being hit */
+            const queenHitImpact = 7;
+            const workerHitImpact = 10;
+            const droneHitImpact = 12;
+
+            const alertElement = document.getElementById('alert');
+            const buttonElement = document.getElementById('button');
+            const attackCountElement = document.getElementById('attack-count');
+            const waspNestElement = document.getElementById('wasp-nest');
+            const waspCount = 14;
+            const queenName = '👑 Queen Calathea 👑';
+            const wasps = [];
+            let livingWaspIDs = [];
+            let targetId = 0;
+            
+            setupGame();
+            
+            /* Set the game up with fresh starting values */
+            function setupGame() {
+                let role = '';
+                let health = 0;
+                let hitImpact = 0;
+                let waspNames = ['Calathea', 'Corydalis', 'Monstera', 'Agapanthus', 'Calamus', 'Aralia', 'Pothos', 'Araucaria', 'Crocus', 'Buckeye', 'Yarrow', 'Verbena', 'Nemesia', 'Viburnum'];
+                let waspElements = [];
+    
+                for (let i = 1; i <= waspCount; i++) {
+                    switch (true) {
+                        case i === 1:
+                            role = 'queen';
+                            health = queenHealth;
+                            hitImpact = queenHitImpact;
+                            break;
+                        case i > 1 && i <= 6:
+                            role = 'worker';
+                            health = workerHealth;
+                            hitImpact = workerHitImpact;
+                            break;
+                        default:
+                            role = 'drone';
+                            health = droneHealth;
+                            hitImpact = droneHitImpact;
+                    }
+                    wasps[i] = {
+                        'role': role,
+                        'health': health,
+                        'hitImpact': hitImpact,
+                        'name': waspNames[i - 1]
+                    };
+                    livingWaspIDs.push(i);
+                    waspElements.push(`
+                        <div class="wasp ${wasps[i].role}" ><h${Math.ceil(i / 3) + 1}>
+                            ${isQueen(i) ? queenName : `${wasps[i].name} <i> - ${wasps[i].role} wasp</i>`} // HP: <span id=wasp-health${i}>${wasps[i].health}</span></h${Math.ceil(i / 3) + 1}>
+                        </div>
+                    `);
+                }
+
+                waspNestElement.innerHTML = shuffle(waspElements).join(''); 
+            }
+
+            /* Randomise the elements of an array */
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            /* Determine whether a wasp is the queen */
+            function isQueen(id) {
+                return wasps[id].role === 'queen';
+            }
+
+            /* Hit a random living wasp */
+            function attack() {
+                attackCountElement.innerText++;
+                targetId = getTargetId();
+                wasps[targetId].health = wasps[targetId].health - wasps[targetId].hitImpact, 0;
+                if (wasps[targetId].health <= 0) {
+                    isQueen(targetId) ? endGame() : killTarget(targetId);
+                } else {
+                    hitTarget(targetId);
+                }
+            }
+
+            /* Select a random living wasp to target */
+            function getTargetId() {
+                return shuffle(livingWaspIDs)[0];
+            }
+
+            /* Convert a living wasp into a dead wasp */
+            function killTarget(targetId) {
+                alertElement.innerText = `${wasps[targetId].name} is dead 💀`;
+                livingWaspIDs.splice(livingWaspIDs.indexOf(targetId), 1);
+                document.getElementById(`wasp-health${targetId}`).innerText = 0;
+            }
+
+            /* Inflict damage on a living wasp */
+            function hitTarget(targetId) {
+                document.getElementById(`wasp-health${targetId}`).innerText = wasps[targetId].health;
+                alertElement.innerText = `${isQueen(targetId) ? queenName : wasps[targetId].name} was hit!`;
+            }
+
+            /* Convert all remaining wasps into dead wasps and end the game */
+            function endGame() {
+                livingWaspIDs.slice().forEach(function(targetId, index) { /* `slice()` creates a shallow copy of the array, so the original array is not modified during iteration */
+                    killTarget(targetId);
+                });
+                alertElement.innerText = `🏁🏁 GAME OVER 🏁🏁 // The Queen is dead 💀 and the wasp nest has been destroyed`;
+                buttonElement.innerHTML = `<button onclick="newGame()">NEW GAME</button>`;
+            }
+
+            /* Reset the game */
+            function newGame() {
+                livingWaspIDs = [];
+                buttonElement.innerHTML = `<button onclick="attack()">ATTACK!</button>`;
+                alertElement.innerText = '';
+                attackCountElement.innerText = 0;
+                setupGame();
+            }
+        </script>
+    </body>
+</html>
