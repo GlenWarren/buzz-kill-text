@@ -1,4 +1,4 @@
-## BUZZ KILL
+## BUZZ KILL - Text only
 
 ### Cypress
 
